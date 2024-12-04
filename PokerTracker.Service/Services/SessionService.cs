@@ -116,7 +116,7 @@ namespace PokerTracker.Service.Services
 
 			if(usersWithBalance.Any())
 			{
-				embedBuilder.AddField("Participants", $"{string.Join("\n", usersWithBalance.Select(u => $"**{u.User.GlobalName}**: {u.Balance} ({getDifferenceString(session.StartingBalance, u.Balance)}) [{getVolumePercentileString(actualChipsVolume, u.Balance)}]"))}");
+				embedBuilder.AddField("Participants", $"{string.Join("\n", usersWithBalance.Select(u => $"**{u.User.GlobalName}**: {u.Balance} ({GetDifferenceString(session.StartingBalance, u.Balance)}) [{GetVolumePercentileString(actualChipsVolume, u.Balance)}]"))}");
 			}
 			else
 			{
@@ -126,7 +126,7 @@ namespace PokerTracker.Service.Services
 			return embedBuilder.Build();
 		}
 
-		private static string getDifferenceString(int initialChipsValue, int userChipsValue)
+		private static string GetDifferenceString(int initialChipsValue, int userChipsValue)
 		{
 			var difference = userChipsValue - initialChipsValue;
 
@@ -140,7 +140,7 @@ namespace PokerTracker.Service.Services
 			return $"{differenceIndicator}{Math.Abs(difference)}";
 		}
 
-		private static string getVolumePercentileString(int chipsVolume, int userChipsValue)
+		private static string GetVolumePercentileString(int chipsVolume, int userChipsValue)
 		{
 			var percentile = (double)userChipsValue / chipsVolume * 100;
 			return $"{percentile:0.00}%";
