@@ -171,7 +171,10 @@ namespace PokerTracker.Service.Services
 				}
 			}
 
-			var usersWithBalance = session.Participants.Join(users, p => p.UserId, u => u.Id, (p, u) => new { User = u, p.Balance });
+			var usersWithBalance = session.Participants
+				.Join(users, p => p.UserId, u => u.Id, (p, u) => new { User = u, p.Balance })
+				.OrderByDescending(x => x.Balance)
+				.ToList();
 
 			var actualChipsVolume = session.Participants.Sum(p => p.Balance);
 			var embedBuilder = new EmbedBuilder()
@@ -183,9 +186,9 @@ namespace PokerTracker.Service.Services
 				.WithThumbnailUrl("https://cdn.discordapp.com/avatars/1313855807875452949/4e4bbdfb3662617bcebec167f1002d5e?size=1024")
 				.WithCurrentTimestamp();
 
-			if(usersWithBalance.Any())
+			if (usersWithBalance.Count != 0)
 			{
-				embedBuilder.AddField("Participants", $"{string.Join("\n", usersWithBalance.Select(u => $"**{u.User.GlobalName}:** {u.Balance} chips ({GetDifferenceString(session.StartingBalance, u.Balance)}) [{GetVolumePercentileString(actualChipsVolume, u.Balance)}]"))}");
+				embedBuilder.AddField("Participants", $"{string.Join("\n", usersWithBalance.Select(u => $"**{usersWithBalance.IndexOf(u) + 1}. {u.User.GlobalName}:** {u.Balance} chips ({GetDifferenceString(session.StartingBalance, u.Balance)}) [{GetVolumePercentileString(actualChipsVolume, u.Balance)}]"))}");
 			}
 			else
 			{
