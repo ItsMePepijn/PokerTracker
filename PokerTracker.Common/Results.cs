@@ -12,5 +12,6 @@ namespace PokerTracker.Common
 		public static readonly Result ChannelNotFound = new("A05", "Channel not found.");
 		public static readonly Result ChannelNotText = new("A06", "Channel is not a text channel.");
 		public static readonly Result NoSessionInChannel = new("A07", "There is no session currentl active in this channel.");
+		public static readonly Result MessageNotFound = new("A08", "Message not found.");
 	}
 }

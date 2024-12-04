@@ -101,6 +101,12 @@ namespace PokerTracker.Service.Services
 					return Results.ChannelNotText;
 				}
 
+				var message = await messageChannel.GetMessageAsync(messageId);
+				if (message is null)
+				{
+					return Results.MessageNotFound;
+				}
+
 				await messageChannel.ModifyMessageAsync(messageId, func);
 
 				return Results.Success;

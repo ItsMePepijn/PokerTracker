@@ -123,15 +123,22 @@ namespace PokerTracker.Service.Services
 				await context.SaveChangesAsync();
 				var embed = CreateEmbedForSession(session);
 
+				var shouldCreate = false;
 				if (session.ExistingEmbedMessageId is not null)
 				{
 					var messageResult = await messageService.ModifyMessageInChannel(channelId, session.ExistingEmbedMessageId.Value, m => m.Embed = embed);
-					if (!messageResult.Success)
+					
+					if(messageResult == Results.MessageNotFound)
+					{
+						shouldCreate = true;
+					}
+					else if (!messageResult.Success)
 					{
 						return messageResult.RemoveValue();
 					}
 				}
-				else
+
+				if(session.ExistingEmbedMessageId is null || shouldCreate)
 				{
 					var messageResult = await messageService.SendMessageToChannelAsync(channelId, embed: embed);
 					if (!messageResult.Success)
