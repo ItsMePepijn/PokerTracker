@@ -29,6 +29,8 @@ if (app.Environment.IsDevelopment())
 	app.MapOpenApi();
 }
 
+app.Services.EnsureDatabaseExists();
+
 app.UseAuthorization();
 
 app.MapControllers();
