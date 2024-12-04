@@ -363,7 +363,7 @@ MigrationBackup/
 FodyWeavers.xsd
 /PokerTracker.Service/_config.yml
 
-/PokerTracker.Service/app.db
-/PokerTracker.Service/app.db-shm
-/PokerTracker.Service/app.db-wal
-/PokerTracker.Service/app.db-journal
+/PokerTracker.Service/PokerTracker.db
+/PokerTracker.Service/PokerTracker.db-shm
+/PokerTracker.Service/PokerTracker.db-wal
+/PokerTracker.Service/PokerTracker.db-journal
