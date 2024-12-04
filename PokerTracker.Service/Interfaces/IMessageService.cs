@@ -20,5 +20,6 @@ namespace PokerTracker.Service.Interfaces
 			PollProperties? poll = null);
 
 		Task<Result> DeleteMessageFromChannel(ulong channelId, ulong messageId);
+		Task<Result> ModifyMessageInChannel(ulong channelId, ulong messageId, Action<MessageProperties> func);
 	}
 }

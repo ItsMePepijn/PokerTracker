@@ -1,5 +1,6 @@
 ﻿using Discord;
 using Discord.WebSocket;
+using Microsoft.EntityFrameworkCore;
 using PokerTracker.Common.Extensions;
 using PokerTracker.Common.Models;
 using PokerTracker.Persistence;
@@ -90,6 +91,67 @@ namespace PokerTracker.Service.Services
 			}
 		}
 
+		public async Task<Result> SetBalanceForUserInChannel(ulong channelId, ulong userId, int balance)
+		{
+			try
+			{
+				await using var context = contextFactory();
+				var session = context.Sessions
+					.Include(s => s.Participants)
+					.FirstOrDefault(s => s.ChannelId == channelId);
+				if (session is null)
+				{
+					return Results.NoSessionInChannel;
+				}
+
+				var participant = session.Participants.FirstOrDefault(p => p.SessionId == session.Id && p.UserId == userId);
+				if (participant is null)
+				{
+					participant = new Participant
+					{
+						SessionId = session.Id,
+						UserId = userId,
+						Balance = balance
+					};
+					session.Participants.Add(participant);
+				}
+				else
+				{
+					participant.Balance = balance;
+				}
+
+				await context.SaveChangesAsync();
+				var embed = CreateEmbedForSession(session);
+
+				if (session.ExistingEmbedMessageId is not null)
+				{
+					var messageResult = await messageService.ModifyMessageInChannel(channelId, session.ExistingEmbedMessageId.Value, m => m.Embed = embed);
+					if (!messageResult.Success)
+					{
+						return messageResult.RemoveValue();
+					}
+				}
+				else
+				{
+					var messageResult = await messageService.SendMessageToChannelAsync(channelId, embed: embed);
+					if (!messageResult.Success)
+					{
+						return messageResult.RemoveValue();
+					}
+
+					session.ExistingEmbedMessageId = messageResult.Value?.Id;
+					await context.SaveChangesAsync();
+				}
+
+				return Results.Success;
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex, "{method}: Failed to set balance for user in channel: {ex}", nameof(SetBalanceForUserInChannel), ex);
+				return Results.Failure;
+			}
+		}
+
 		private Embed CreateEmbedForSession(Session session)
 		{
 			var users = new List<SocketUser>();
@@ -116,7 +178,7 @@ namespace PokerTracker.Service.Services
 
 			if(usersWithBalance.Any())
 			{
-				embedBuilder.AddField("Participants", $"{string.Join("\n", usersWithBalance.Select(u => $"**{u.User.GlobalName}**: {u.Balance} ({GetDifferenceString(session.StartingBalance, u.Balance)}) [{GetVolumePercentileString(actualChipsVolume, u.Balance)}]"))}");
+				embedBuilder.AddField("Participants", $"{string.Join("\n", usersWithBalance.Select(u => $"**{u.User.GlobalName}:** {u.Balance} chips ({GetDifferenceString(session.StartingBalance, u.Balance)}) [{GetVolumePercentileString(actualChipsVolume, u.Balance)}]"))}");
 			}
 			else
 			{

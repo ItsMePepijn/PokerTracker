@@ -86,5 +86,30 @@ namespace PokerTracker.Service.Services
 				return Results.Failure;
 			}
 		}
+
+		public async Task<Result> ModifyMessageInChannel(ulong channelId, ulong messageId, Action<MessageProperties> func)
+		{
+			try
+			{
+				var channel = discord.GetChannel(channelId);
+				if (channel is null)
+				{
+					return Results.ChannelNotFound;
+				}
+				if (channel is not IMessageChannel messageChannel)
+				{
+					return Results.ChannelNotText;
+				}
+
+				await messageChannel.ModifyMessageAsync(messageId, func);
+
+				return Results.Success;
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex, "{method}: Failed to modify message in channel: {ex}", nameof(ModifyMessageInChannel), ex);
+				return Results.Failure;
+			}
+		}
 	}
 }
