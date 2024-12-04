@@ -42,7 +42,7 @@ namespace PokerTracker.Service.Services
 				await context.Sessions.AddAsync(session);
 				await context.SaveChangesAsync();
 
-				var embed = CreateEmbedForSession(session);
+				var embed = await CreateEmbedForSession(session);
 				var messageResult = await messageService.SendMessageToChannelAsync(channelId, embed: embed);
 
 				if (!messageResult.Success)
@@ -121,7 +121,7 @@ namespace PokerTracker.Service.Services
 				}
 
 				await context.SaveChangesAsync();
-				var embed = CreateEmbedForSession(session);
+				var embed = await CreateEmbedForSession(session);
 
 				var shouldCreate = false;
 				if (session.ExistingEmbedMessageId is not null)
@@ -159,12 +159,12 @@ namespace PokerTracker.Service.Services
 			}
 		}
 
-		private Embed CreateEmbedForSession(Session session)
+		private async Task<Embed> CreateEmbedForSession(Session session)
 		{
-			var users = new List<SocketUser>();
+			var users = new List<IUser>();
 			foreach (var participant in session.Participants)
 			{
-				var user = discord.GetUser(participant.UserId);
+				var user = await discord.GetUserAsync(participant.UserId);
 				if (user is not null)
 				{
 					users.Add(user);
