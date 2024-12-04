@@ -108,6 +108,7 @@ namespace PokerTracker.Service.Services
 				.WithTitle("Session")
 				.AddField("Starting Balance", $"`{session.StartingBalance}`")
 				.AddField("Chip volume", $"`{session.StartingBalance * session.Participants.Count}`")
+				.AddField("Actual chip volume", $"`{session.Participants.Sum(p => p.Balance)}`")
 				.WithColor(new Color(0x00b9ff))
 				.WithThumbnailUrl("https://cdn.discordapp.com/avatars/1313855807875452949/4e4bbdfb3662617bcebec167f1002d5e?size=1024")
 				.WithCurrentTimestamp();
