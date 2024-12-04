@@ -104,18 +104,19 @@ namespace PokerTracker.Service.Services
 
 			var usersWithBalance = session.Participants.Join(users, p => p.UserId, u => u.Id, (p, u) => new { User = u, p.Balance });
 
+			var actualChipsVolume = session.Participants.Sum(p => p.Balance);
 			var embedBuilder = new EmbedBuilder()
 				.WithTitle("Session")
 				.AddField("Starting Balance", $"`{session.StartingBalance}`")
 				.AddField("Chip volume", $"`{session.StartingBalance * session.Participants.Count}`")
-				.AddField("Actual chip volume", $"`{session.Participants.Sum(p => p.Balance)}`")
+				.AddField("Actual chip volume", $"`{actualChipsVolume}`")
 				.WithColor(new Color(0x00b9ff))
 				.WithThumbnailUrl("https://cdn.discordapp.com/avatars/1313855807875452949/4e4bbdfb3662617bcebec167f1002d5e?size=1024")
 				.WithCurrentTimestamp();
 
 			if(usersWithBalance.Any())
 			{
-				embedBuilder.AddField("Participants", $"{string.Join("\n", usersWithBalance.Select(u => $"{u.User.GlobalName}: {u.Balance}"))}");
+				embedBuilder.AddField("Participants", $"{string.Join("\n", usersWithBalance.Select(u => $"**{u.User.GlobalName}**: {u.Balance} ({getDifferenceString(session.StartingBalance, u.Balance)}) [{getVolumePercentileString(actualChipsVolume, u.Balance)}]"))}");
 			}
 			else
 			{
@@ -123,6 +124,26 @@ namespace PokerTracker.Service.Services
 			}
 
 			return embedBuilder.Build();
+		}
+
+		private static string getDifferenceString(int initialChipsValue, int userChipsValue)
+		{
+			var difference = userChipsValue - initialChipsValue;
+
+			var differenceIndicator = difference switch
+			{
+				> 0 => "+",
+				< 0 => "-",
+				_ => ""
+			};
+
+			return $"{differenceIndicator}{Math.Abs(difference)}";
+		}
+
+		private static string getVolumePercentileString(int chipsVolume, int userChipsValue)
+		{
+			var percentile = (double)userChipsValue / chipsVolume * 100;
+			return $"{percentile:0.00}%";
 		}
 	}
 }
