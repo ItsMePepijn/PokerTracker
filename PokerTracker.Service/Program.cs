@@ -4,11 +4,13 @@ using PokerTracker.Service.Extensions;
 using PokerTracker.Service.Services;
 using PokerTracker.Service.Settings;
 using PokerTracker.Persistence;
+using PokerTracker.Service.Interfaces;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddSetting<DiscordClientSettings>();
 
+builder.Services.AddTransient<ISessionService, SessionService>();
 builder.Services.AddSingleton<DiscordSocketClient>();
 builder.Services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()));
 builder.Services.AddHostedService<StartupService>();

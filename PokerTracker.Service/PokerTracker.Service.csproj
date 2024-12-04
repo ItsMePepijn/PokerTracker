@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\PokerTracker.Common\PokerTracker.Common.csproj" />
     <ProjectReference Include="..\PokerTracker.Persistence\PokerTracker.Persistence.csproj" />
   </ItemGroup>
 </Project>

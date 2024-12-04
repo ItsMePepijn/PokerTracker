@@ -5,6 +5,8 @@ namespace PokerTracker.Persistence
 {
 	public class DataContext(DbContextOptions<DataContext> options) : DbContext(options)
 	{
+		public DbSet<Session> Sessions { get; set; }
+		public DbSet<Participant> Participants { get; set; }
 
 		public override int SaveChanges()
 		{

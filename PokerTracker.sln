@@ -7,6 +7,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PokerTracker.Persistence", 
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PokerTracker.Service", "PokerTracker.Service\PokerTracker.Service.csproj", "{6A659610-47FB-4063-B95D-D53FB28F75A7}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "PokerTracker.Common", "PokerTracker.Common\PokerTracker.Common.csproj", "{3A322A18-C892-4DA9-A9E7-348A7B41B4D8}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -21,6 +23,10 @@ Global
 		{6A659610-47FB-4063-B95D-D53FB28F75A7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6A659610-47FB-4063-B95D-D53FB28F75A7}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6A659610-47FB-4063-B95D-D53FB28F75A7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3A322A18-C892-4DA9-A9E7-348A7B41B4D8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3A322A18-C892-4DA9-A9E7-348A7B41B4D8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3A322A18-C892-4DA9-A9E7-348A7B41B4D8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3A322A18-C892-4DA9-A9E7-348A7B41B4D8}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

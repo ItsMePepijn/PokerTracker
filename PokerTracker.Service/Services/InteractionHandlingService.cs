@@ -31,9 +31,9 @@ namespace PokerTracker.Service.Services
 
 			_discord.Ready += async () =>
 			{
-//#if DEBUG
-//				await _interactions.RegisterCommandsToGuildAsync(1027991260981633035, true);
-//#endif
+#if DEBUG
+				await _interactions.RegisterCommandsToGuildAsync(1027991260981633035, true);
+#endif
 				await _interactions.RegisterCommandsGloballyAsync(true);
 			};
 			_discord.InteractionCreated += OnInteractionAsync;
