@@ -11,6 +11,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.AddSetting<DiscordClientSettings>();
 
 builder.Services.AddTransient<ISessionService, SessionService>();
+builder.Services.AddTransient<IMessageService, MessageService>();
 builder.Services.AddSingleton<DiscordSocketClient>();
 builder.Services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()));
 builder.Services.AddHostedService<StartupService>();

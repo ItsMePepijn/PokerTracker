@@ -1,4 +1,7 @@
-﻿using PokerTracker.Common.Models;
+﻿using Discord;
+using Discord.WebSocket;
+using PokerTracker.Common.Extensions;
+using PokerTracker.Common.Models;
 using PokerTracker.Persistence;
 using PokerTracker.Persistence.Models;
 using PokerTracker.Service.Interfaces;
@@ -8,6 +11,8 @@ namespace PokerTracker.Service.Services
 {
 	public class SessionService(
 		Func<DataContext> contextFactory,
+		DiscordSocketClient discord,
+		IMessageService messageService,
 		ILogger<SessionService> logger) : ISessionService
 	{
 		public async Task<Result> CreateSession(ulong channelId, int startingBalance)
@@ -33,10 +38,21 @@ namespace PokerTracker.Service.Services
 					StartingBalance = startingBalance
 				};
 
-				context.Sessions.Add(session);
+				await context.Sessions.AddAsync(session);
 				await context.SaveChangesAsync();
 
-				//TODO: send embed and update message id in db
+				var embed = CreateEmbedForSession(session);
+				var messageResult = await messageService.SendMessageToChannelAsync(channelId, embed: embed);
+
+				if (!messageResult.Success)
+				{
+					context.Sessions.Remove(session);
+					await context.SaveChangesAsync();
+					return messageResult.RemoveValue();
+				}
+
+				session.ExistingEmbedMessageId = messageResult.Value?.Id;
+				await context.SaveChangesAsync();
 
 				return Results.Success;
 			}
@@ -54,10 +70,16 @@ namespace PokerTracker.Service.Services
 				await using var context = contextFactory();
 				var sessions = context.Sessions.Where(s => s.ChannelId == channelId);
 
+				foreach (var session in sessions)
+				{
+					if (session.ExistingEmbedMessageId.HasValue)
+					{
+						await messageService.DeleteMessageFromChannel(channelId, session.ExistingEmbedMessageId.Value);
+					}
+				}
+
 				context.Sessions.RemoveRange(sessions);
 				await context.SaveChangesAsync();
-
-				//TODO remove embeds
 
 				return Results.Success;
 			}
@@ -66,6 +88,40 @@ namespace PokerTracker.Service.Services
 				logger.LogError(ex, "{method}: Failed to clear sessions in channel: {ex}", nameof(ClearSessionsInChannel), ex);
 				return Results.Failure;
 			}
+		}
+
+		private Embed CreateEmbedForSession(Session session)
+		{
+			var users = new List<SocketUser>();
+			foreach (var participant in session.Participants)
+			{
+				var user = discord.GetUser(participant.UserId);
+				if (user is not null)
+				{
+					users.Add(user);
+				}
+			}
+
+			var usersWithBalance = session.Participants.Join(users, p => p.UserId, u => u.Id, (p, u) => new { User = u, p.Balance });
+
+			var embedBuilder = new EmbedBuilder()
+				.WithTitle("Session")
+				.AddField("Starting Balance", $"`{session.StartingBalance}`")
+				.AddField("Chip volume", $"`{session.StartingBalance * session.Participants.Count}`")
+				.WithColor(new Color(0x00b9ff))
+				.WithThumbnailUrl("https://cdn.discordapp.com/avatars/1313855807875452949/4e4bbdfb3662617bcebec167f1002d5e?size=1024")
+				.WithCurrentTimestamp();
+
+			if(usersWithBalance.Any())
+			{
+				embedBuilder.AddField("Participants", $"{string.Join("\n", usersWithBalance.Select(u => $"{u.User.GlobalName}: {u.Balance}"))}");
+			}
+			else
+			{
+				embedBuilder.AddField("Participants", "No participants yet");
+			}
+
+			return embedBuilder.Build();
 		}
 	}
 }
