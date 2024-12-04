@@ -1,5 +1,4 @@
 ﻿using Discord;
-using Microsoft.Extensions.Logging;
 
 namespace PokerTracker.Service.Extensions
 {

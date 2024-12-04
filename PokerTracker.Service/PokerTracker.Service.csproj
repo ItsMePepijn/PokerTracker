@@ -1,21 +1,24 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <OutputType>Exe</OutputType>
     <TargetFramework>net9.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <UserSecretsId>cb7dd0c1-bb3a-4f4f-a2f6-e2191f27afc2</UserSecretsId>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="_config.yml">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
+    <PackageReference Include="Discord.Net.Interactions" Version="3.16.0" />
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" Version="9.0.0" />
+	<PackageReference Include="Discord.Net" Version="3.16.0" />
+	<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.0.0">
+	  <PrivateAssets>all</PrivateAssets>
+	  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+	</PackageReference>
+	<PackageReference Include="Microsoft.Extensions.Hosting" Version="9.0.0" />
   </ItemGroup>
 
   <ItemGroup>
-	  <PackageReference Include="Discord.Net" Version="3.10.0" />
-	  <PackageReference Include="Microsoft.Extensions.Hosting" Version="7.0.1" />
-	  <PackageReference Include="NetEscapades.Configuration.Yaml" Version="3.0.0" />
+    <ProjectReference Include="..\PokerTracker.Persistence\PokerTracker.Persistence.csproj" />
   </ItemGroup>
 </Project>

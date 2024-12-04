@@ -362,3 +362,8 @@ MigrationBackup/
 # Fody - auto-generated XML schema
 FodyWeavers.xsd
 /PokerTracker.Service/_config.yml
+
+/PokerTracker.Service/app.db
+/PokerTracker.Service/app.db-shm
+/PokerTracker.Service/app.db-wal
+/PokerTracker.Service/app.db-journal

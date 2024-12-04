@@ -1,27 +1,25 @@
-﻿
-using Discord.WebSocket;
+﻿using Discord.WebSocket;
 using Discord;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using PokerTracker.Service.Extensions;
+using PokerTracker.Service.Settings;
+using Microsoft.Extensions.Options;
 
 namespace PokerTracker.Service.Services
 {
 	public class StartupService : IHostedService
 	{
 		private readonly DiscordSocketClient _discord;
-		private readonly IConfiguration _config;
+		private readonly DiscordClientSettings _clientSettings;
 		private readonly ILogger<StartupService> _logger;
 
 		public StartupService(
 			DiscordSocketClient discord,
-			IConfiguration config,
+			IOptions<DiscordClientSettings> clientSettingss,
 			ILogger<DiscordSocketClient> discordLogger,
 			ILogger<StartupService> logger)
 		{
 			_discord = discord;
-			_config = config;
+			_clientSettings = clientSettingss.Value;
 			_logger = logger;
 
 			_discord.Log += msg => msg.LogTo(discordLogger);
@@ -29,7 +27,7 @@ namespace PokerTracker.Service.Services
 
 		public async Task StartAsync(CancellationToken cancellationToken)
 		{
-			await _discord.LoginAsync(TokenType.Bot, _config["token"]);
+			await _discord.LoginAsync(TokenType.Bot, _clientSettings.Token);
 			await _discord.StartAsync();
 			_logger.LogInformation("Bot started at {currenttime}", DateTime.Now.ToString("dd-MM-yyyy HH:mm"));
 

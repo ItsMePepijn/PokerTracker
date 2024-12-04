@@ -1,21 +1,33 @@
-﻿using Discord.Interactions;
+using Discord.Interactions;
 using Discord.WebSocket;
-using Microsoft.Extensions.Configuration;
-using Microsoft.Extensions.DependencyInjection;
-using Microsoft.Extensions.Hosting;
+using PokerTracker.Service.Extensions;
 using PokerTracker.Service.Services;
+using PokerTracker.Service.Settings;
+using PokerTracker.Persistence;
 
-using IHost host = Host.CreateDefaultBuilder(args)
-	.ConfigureAppConfiguration(config =>
-	{
-		config.AddYamlFile("_config.yml", false);
-	})
-	.ConfigureServices(services =>
-	{
-		services.AddSingleton<DiscordSocketClient>();
-		services.AddSingleton<InteractionService>();
-		services.AddHostedService<StartupService>();
-	})
-	.Build();
+var builder = WebApplication.CreateBuilder(args);
 
-await host.RunAsync();
+builder.AddSetting<DiscordClientSettings>();
+
+builder.Services.AddSingleton<DiscordSocketClient>();
+builder.Services.AddSingleton(x => new InteractionService(x.GetRequiredService<DiscordSocketClient>()));
+builder.Services.AddHostedService<StartupService>();
+builder.Services.AddHostedService<InteractionHandlingService>();
+
+builder.AddPersistence();
+
+builder.Services.AddControllers();
+builder.Services.AddOpenApi();
+
+var app = builder.Build();
+
+if (app.Environment.IsDevelopment())
+{
+	app.MapOpenApi();
+}
+
+app.UseAuthorization();
+
+app.MapControllers();
+
+app.Run();
