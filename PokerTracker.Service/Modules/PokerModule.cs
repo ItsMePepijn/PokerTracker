@@ -39,7 +39,6 @@ namespace PokerTracker.Service.Modules
 
         [SlashCommand("set-balance", "Set current session's balance")]
         [RequireContext(ContextType.Guild)]
-        [RequireUserPermission(GuildPermission.ManageChannels)]
         public async Task SetBalance([MinValue(0)] int balance)
         {
             var result = await sessionService.SetBalanceForUserInChannel(Context.Channel.Id, Context.User.Id, balance);
