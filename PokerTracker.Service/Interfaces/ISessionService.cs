@@ -7,5 +7,6 @@ namespace PokerTracker.Service.Interfaces
         Task<Result> CreateSession(ulong channelId, int startingBalance);
         Task<Result> ClearSessionsInChannel(ulong channelId);
         Task<Result> SetBalanceForUserInChannel(ulong channelId, ulong userId, int balance);
-    }
+        Task<Result> CompleteSessionInChannel(ulong channelId);
+	}
 }

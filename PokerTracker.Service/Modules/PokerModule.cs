@@ -50,5 +50,20 @@ namespace PokerTracker.Service.Modules
 
             await RespondAsync($"Updated your balance to {balance}", ephemeral: true);
         }
-    }
+
+		[SlashCommand("complete", "Complete channel's session")]
+		[RequireContext(ContextType.Guild)]
+		[RequireUserPermission(GuildPermission.ManageChannels)]
+		public async Task CompleteSession([ChannelTypes(ChannelType.Text)] IChannel channel)
+		{
+			var result = await sessionService.CompleteSessionInChannel(channel.Id);
+			if (!result.Success)
+			{
+				await RespondAsync(result.Message, ephemeral: true);
+				return;
+			}
+
+			await RespondAsync($"Completed session in <#{channel.Id}>", ephemeral: true);
+		}
+	}
 }

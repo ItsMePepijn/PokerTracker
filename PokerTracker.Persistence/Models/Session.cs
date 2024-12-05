@@ -6,6 +6,7 @@ namespace PokerTracker.Persistence.Models
         public ulong ChannelId { get; set; }
         public ulong? ExistingEmbedMessageId { get; set; }
         public int StartingBalance { get; set; }
-        public List<Participant> Participants { get; set; } = [];
+        public bool Completed { get; set; }
+		public List<Participant> Participants { get; set; } = [];
     }
 }

@@ -27,7 +27,7 @@ namespace PokerTracker.Service.Services
 
                 await using var context = contextFactory();
 
-                var sessionsInChannel = context.Sessions.Count(s => s.ChannelId == channelId);
+                var sessionsInChannel = context.Sessions.Count(s => s.ChannelId == channelId && !s.Completed);
                 if (sessionsInChannel > 0)
                 {
                     return Results.AlreadySessionInChannel;
@@ -69,7 +69,7 @@ namespace PokerTracker.Service.Services
             try
             {
                 await using var context = contextFactory();
-                var sessions = context.Sessions.Where(s => s.ChannelId == channelId);
+                var sessions = context.Sessions.Where(s => s.ChannelId == channelId && !s.Completed);
 
                 foreach (var session in sessions)
                 {
@@ -98,13 +98,19 @@ namespace PokerTracker.Service.Services
                 await using var context = contextFactory();
                 var session = context.Sessions
                     .Include(s => s.Participants)
-                    .FirstOrDefault(s => s.ChannelId == channelId);
+                    .FirstOrDefault(s => s.ChannelId == channelId && !s.Completed);
+
                 if (session is null)
                 {
                     return Results.NoSessionInChannel;
                 }
 
-                var participant = session.Participants.FirstOrDefault(p => p.SessionId == session.Id && p.UserId == userId);
+                if(session.Completed)
+				{
+					return Results.SessionCompleted;
+				}
+
+				var participant = session.Participants.FirstOrDefault(p => p.SessionId == session.Id && p.UserId == userId);
                 if (participant is null)
                 {
                     participant = new Participant
@@ -121,43 +127,88 @@ namespace PokerTracker.Service.Services
                 }
 
                 await context.SaveChangesAsync();
-                var embed = await CreateEmbedForSession(session);
 
-                var shouldCreate = false;
-                if (session.ExistingEmbedMessageId is not null)
-                {
-                    var messageResult = await messageService.ModifyMessageInChannel(channelId, session.ExistingEmbedMessageId.Value, m => m.Embed = embed);
-
-                    if (messageResult == Results.MessageNotFound)
-                    {
-                        shouldCreate = true;
-                    }
-                    else if (!messageResult.Success)
-                    {
-                        return messageResult.RemoveValue();
-                    }
-                }
-
-                if (session.ExistingEmbedMessageId is null || shouldCreate)
-                {
-                    var messageResult = await messageService.SendMessageToChannelAsync(channelId, embed: embed);
-                    if (!messageResult.Success)
-                    {
-                        return messageResult.RemoveValue();
-                    }
-
-                    session.ExistingEmbedMessageId = messageResult.Value?.Id;
-                    await context.SaveChangesAsync();
-                }
-
-                return Results.Success;
-            }
+				return await UpdateEmbedForSession(session, context);
+			}
             catch (Exception ex)
             {
                 logger.LogError(ex, "{method}: Failed to set balance for user in channel: {ex}", nameof(SetBalanceForUserInChannel), ex);
                 return Results.Failure;
             }
         }
+
+        public async Task<Result> CompleteSessionInChannel(ulong channelId)
+        { 
+            try
+            {
+				await using var context = contextFactory();
+				var session = context.Sessions
+					.Include(s => s.Participants)
+					.FirstOrDefault(s => s.ChannelId == channelId);
+
+				if (session is null)
+				{
+					return Results.NoSessionInChannel;
+				}
+
+				if (session.Completed)
+				{
+					return Results.SessionCompleted;
+				}
+
+				session.Completed = true;
+				await context.SaveChangesAsync();
+
+				return await UpdateEmbedForSession(session, context);
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex, "{method}: Failed to complete session in channel: {ex}", nameof(CompleteSessionInChannel), ex);
+				return Results.Failure;
+			}
+		}
+
+        private async Task<Result> UpdateEmbedForSession(Session session, DataContext context)
+        {
+            try
+            {
+				var embed = await CreateEmbedForSession(session);
+
+				var shouldCreate = false;
+				if (session.ExistingEmbedMessageId is not null)
+				{
+					var messageResult = await messageService.ModifyMessageInChannel(session.ChannelId, session.ExistingEmbedMessageId.Value, m => m.Embed = embed);
+
+					if (messageResult == Results.MessageNotFound)
+					{
+						shouldCreate = true;
+					}
+					else if (!messageResult.Success)
+					{
+						return messageResult.RemoveValue();
+					}
+				}
+
+				if (session.ExistingEmbedMessageId is null || shouldCreate)
+				{
+					var messageResult = await messageService.SendMessageToChannelAsync(session.ChannelId, embed: embed);
+					if (!messageResult.Success)
+					{
+						return messageResult.RemoveValue();
+					}
+
+					session.ExistingEmbedMessageId = messageResult.Value?.Id;
+					await context.SaveChangesAsync();
+				}
+
+				return Results.Success;
+			}
+			catch (Exception ex)
+			{
+				logger.LogError(ex, "{method}: Failed to update embed for session: {ex}", nameof(UpdateEmbedForSession), ex);
+				return Results.Failure;
+			}
+		}
 
         private async Task<Embed> CreateEmbedForSession(Session session)
         {
@@ -178,7 +229,6 @@ namespace PokerTracker.Service.Services
 
             var actualChipsVolume = session.Participants.Sum(p => p.Balance);
             var embedBuilder = new EmbedBuilder()
-                .WithTitle("Session")
                 .AddField("Starting Balance", $"`{session.StartingBalance}`")
                 .AddField("Chip volume", $"`{session.StartingBalance * session.Participants.Count}`")
                 .AddField("Actual chip volume", $"`{actualChipsVolume}`")
@@ -186,9 +236,18 @@ namespace PokerTracker.Service.Services
                 .WithThumbnailUrl("https://cdn.discordapp.com/avatars/1313855807875452949/4e4bbdfb3662617bcebec167f1002d5e?size=1024")
                 .WithCurrentTimestamp();
 
-            if (usersWithBalance.Count != 0)
+            if(session.Completed)
             {
-                embedBuilder.AddField("Participants", $"{string.Join("\n", usersWithBalance.Select(u => $"**{usersWithBalance.IndexOf(u) + 1}. {u.User.GlobalName}:** {u.Balance} chips ({GetDifferenceString(session.StartingBalance, u.Balance)}) [{GetVolumePercentileString(actualChipsVolume, u.Balance)}]"))}");
+                embedBuilder.WithTitle("Session (Completed)");
+			}
+            else
+			{
+				embedBuilder.WithTitle("Session");
+			}
+
+			if (usersWithBalance.Count != 0)
+            {
+                embedBuilder.AddField("Participants", $"{string.Join("\n", usersWithBalance.Select(u => $"**{GetPositionString(usersWithBalance.IndexOf(u) + 1)} {u.User.GlobalName}:** {u.Balance} chips ({GetDifferenceString(session.StartingBalance, u.Balance)}) [{GetVolumePercentileString(actualChipsVolume, u.Balance)}]"))}");
             }
             else
             {
@@ -198,7 +257,18 @@ namespace PokerTracker.Service.Services
             return embedBuilder.Build();
         }
 
-        private static string GetDifferenceString(int initialChipsValue, int userChipsValue)
+        private static string GetPositionString(int position)
+        {
+            return position switch
+            {
+                1 => ":first_place:",
+                2 => ":second_place:",
+                3 => ":third_place:",
+                _ => $"{position}."
+            };
+        }
+
+		private static string GetDifferenceString(int initialChipsValue, int userChipsValue)
         {
             var difference = userChipsValue - initialChipsValue;
 
