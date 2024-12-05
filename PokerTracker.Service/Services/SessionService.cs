@@ -247,7 +247,7 @@ namespace PokerTracker.Service.Services
 
 			if (usersWithBalance.Count != 0)
             {
-                embedBuilder.AddField("Participants", $"{string.Join("\n", usersWithBalance.Select(u => $"**{GetPositionString(usersWithBalance.IndexOf(u) + 1)} {u.User.GlobalName}:** {u.Balance} chips ({GetDifferenceString(session.StartingBalance, u.Balance)}) [{GetVolumePercentileString(actualChipsVolume, u.Balance)}]"))}");
+                embedBuilder.AddField("Participants", $"{string.Join("\n", usersWithBalance.Select(u => $"**{GetPositionString(usersWithBalance.IndexOf(u) + 1)} {u.User.GlobalName}:\n** {u.Balance} chips ({GetDifferenceString(session.StartingBalance, u.Balance)}) [{GetVolumePercentileString(actualChipsVolume, u.Balance)}]"))}");
             }
             else
             {
